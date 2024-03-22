@@ -10,7 +10,7 @@ HEIGHT = 800
 FPS = 60
 sc = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
-font = pygame.font.SysFont('Aria', 100)
+font = pygame.font.SysFont('Aria', 47)
 lvl_game = 1
 from load import *
 
@@ -32,6 +32,12 @@ def game_lvl():
     enemy_group.update()
     panel_group.draw(sc)
     panel_group.update()
+    tower_on_panel_group.draw(sc)
+    tower_on_panel_group.update()
+    tower_shot_group.draw(sc)
+    tower_shot_group.update()
+    text = font.render('MONEY:' + str(tower_on_panel.money), True, 'black')
+    sc.blit(text, (580, 750))
     pygame.display.update()
 def drawMaps(nameFile):
     maps = []
@@ -92,6 +98,22 @@ class Place_tower (pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = pos[0]
         self.rect.y = pos[1]
+
+    def update(self):
+        self.install_tower()
+
+    def install_tower(self):
+        tower_on_panel.timer_click += 1
+        pos_mouse = list(pygame.mouse.get_pos())
+        if tower_on_panel.buy:
+            if self.rect.left<pos_mouse[0]<self.rect.right and self.rect.top<pos_mouse[1]<self.rect.bottom:
+                if pygame.mouse.get_pressed()[0] and tower_on_panel.timer_click / FPS > 1:
+                    tower_on_panel.money -= 70
+                    tower_on_panel.buy = False
+                    tower_on_panel.timer_click = 0
+                    tower_shot = Tower_shot(tower_image, (self.rect.x, self.rect.y))
+                    tower_shot_group.add(tower_shot)
+
 class Player(pygame.sprite.Sprite):
     def __init__(self,image, pos):
         pygame.sprite.Sprite.__init__(self)
@@ -135,17 +157,75 @@ class Player(pygame.sprite.Sprite):
         self.move()
         self.dir_change()
 
+class Tower_on_panel (pygame.sprite.Sprite):
+    def __init__(self,image, pos):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = tower1_grey_image
+        self.rect = self.image.get_rect()
+        self.rect.x = pos[0]
+        self.rect.y = pos[1]
+        self.buy = False
+        self.timer_click = 0
+        self.money = 1000
+    def update(self):
+        self.buy_tower()
 
+        self.timer_click += 1
+    def buy_tower(self):
+
+        if self.money < 100:
+            self.image = tower1_grey_image
+        else:
+            self.image = tower1_color_image
+        if self.money >=100:
+            pos_mouse = list( pygame.mouse.get_pos())
+            if self.rect.left<pos_mouse[0]<self.rect.right and self.rect.top<pos_mouse[1]<self.rect.bottom :
+                if pygame.mouse.get_pressed()[0] and self.timer_click/FPS>1:
+                    self.buy = not self.buy
+                    self.timer_click = 0
+        if self.buy:
+            pos_mouse = list(pygame.mouse.get_pos())
+            x = pos_mouse[0]-40
+            y = pos_mouse[1]-40
+            sc.blit(tower1_color_image, (x,y))
+
+
+
+    # def install_tower(self):
+    #     pos_mouse = list(pygame.mouse.get_pos())
+    #     if self.buy:
+    #         if tower_earth.rect.left<pos_mouse[0]<tower_earth.rect.right and tower_earth.rect.top<pos_mouse[1]<tower_earth.rect.bottom:
+    #             if pygame.mouse.get_pressed()[0] and self.timer_click / FPS > 1:
+    #                 self.rect.x = tower_earth.rect.x
+    #                 self.rect.y = tower_earth.rect.y
+    #                 self.money -= 70
+    #                 self.buy = False
+
+
+
+
+
+
+class Tower_shot (pygame.sprite.Sprite):
+    def __init__(self,image, pos):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = image[0]
+        self.rect = self.image.get_rect()
+        self.rect.x = pos[0]
+        self.rect.y = pos[1]
 def restart():
-    global earth_group, enemy_group, place_tower_group, button_group, panel_group, panel
+    global earth_group, enemy_group, place_tower_group, button_group, panel_group, panel, tower_on_panel_group, tower_on_panel, tower_shot_group
     earth_group = pygame.sprite.Group()
     button_group = pygame.sprite.Group()
     enemy_group = pygame.sprite.Group()
     panel_group = pygame.sprite.Group()
-    panel = Box(panel_image, (0, 720))
+    panel = Box(panel_image, (0, 710))
     panel_group.add(panel)
     place_tower_group = pygame.sprite.Group()
-
+    tower_on_panel_group = pygame.sprite.Group()
+    tower_on_panel = Tower_on_panel(tower1_grey_image, (8, 718))
+    tower_on_panel_group.add(tower_on_panel)
+    tower_shot_group = pygame.sprite.Group()
 
 
 restart()
